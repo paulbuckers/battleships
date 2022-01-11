@@ -1,19 +1,45 @@
 ﻿namespace Battleships.Game;
 
-internal class Board
+public class Board
 {
-    private Ship[] _ships;
+    private readonly int _boardSize = 10;
 
-    private Dictionary<GridCoordinate, Shell> _shells = new();
+    private Dictionary<ShipType, Ship> _ships = new();
 
-    public Board()
+    private Dictionary<GridCoordinate, GridCell> _gridCells = new();
+
+    public bool AddShip(GridCoordinate position, Orientation orientation, ShipType shipType)
     {
-        _ships = new Ship[]
+        Ship ship = new Ship(position, orientation, shipType);
+
+        GridCoordinate[] coordinates = ship.GetGridCoordinates().ToArray();
+
+        if (coordinates.Any(c => _gridCells.ContainsKey(c) || c.X >= _boardSize || c.Y >= _boardSize)) return false; 
+
+        foreach (GridCoordinate coordinate in coordinates)
         {
-            new Ship(new ShipPosition(new GridCoordinate(0, 0), new GridCoordinate(0, 3))),
-            new Ship(new ShipPosition(new GridCoordinate(0, 0), new GridCoordinate(1, 3))),
-            new Ship(new ShipPosition(new GridCoordinate(0, 0), new GridCoordinate(2, 3))),
-            new Ship(new ShipPosition(new GridCoordinate(0, 0), new GridCoordinate(3, 3)))
-        };
+            _gridCells.Add(coordinate, new OccupiedGridCell(ship));
+        }
+
+        _ships.Add(shipType, ship);
+
+        return true;
+    }
+
+    public ShellResult ShellFired(GridCoordinate gridCoordinate)
+    {
+        if(! _gridCells.TryGetValue(gridCoordinate, out GridCell? existingCell))
+        {
+            _gridCells.Add(gridCoordinate, new EmptyGridCell());
+            return ShellResult.Miss;
+        }
+
+        if(existingCell is OccupiedGridCell occupiedCell)
+        {
+            occupiedCell.SetHit();
+            return ShellResult.Hit;
+        }
+
+        throw new ArgumentException($"Cell {gridCoordinate} has already been shelled and missed");
     }
 }

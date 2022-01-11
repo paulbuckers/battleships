@@ -1,6 +1,6 @@
 ﻿namespace Battleships.Game;
 
-internal record struct GridCoordinate
+public record struct GridCoordinate
 {
     public GridCoordinate(int x, int y)
     {
